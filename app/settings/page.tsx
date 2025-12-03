@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { EmailPreferencesTab } from "@/components/settings/EmailPreferencesTab";
 import {
   User,
   Lock,
@@ -356,81 +357,7 @@ export default function SettingsPage() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-primary" />
-                  Email Notifications
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Manage your email notification preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Login Notifications</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Receive email alerts when you log in to your account
-                    </p>
-                  </div>
-                  <Switch defaultChecked disabled className="ml-4" />
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Team Invitations</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Get notified when you're invited to join a team
-                    </p>
-                  </div>
-                  <Switch defaultChecked disabled className="ml-4" />
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Password Changes</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Receive alerts when your password is changed
-                    </p>
-                  </div>
-                  <Switch defaultChecked disabled className="ml-4" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
-                  System Notifications
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Manage system and activity notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Project Updates</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Get notified about project changes and updates
-                    </p>
-                  </div>
-                  <Switch disabled className="ml-4" />
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Activity Alerts</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Receive notifications about team activity
-                    </p>
-                  </div>
-                  <Switch disabled className="ml-4" />
-                </div>
-              </CardContent>
-            </Card>
+            <EmailPreferencesTab />
           </TabsContent>
         </Tabs>
       </div>
