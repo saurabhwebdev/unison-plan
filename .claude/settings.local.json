@@ -45,7 +45,8 @@
       "Bash(gh repo create:*)",
       "Bash(git push:*)",
       "Bash(node scripts/migrate-email-preferences.js:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm test)"
     ],
     "deny": [],
     "ask": []
