@@ -57,6 +57,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TaskProgressUpdater } from "@/components/tasks/TaskProgressUpdater";
 
 interface Task {
   _id: string;
@@ -264,6 +265,31 @@ export default function TasksPage() {
         ? prev.filter((id) => id !== taskId)
         : [...prev, taskId]
     );
+  };
+
+  const handleProgressUpdate = async (taskId: string, newProgress: number) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ progressPercentage: newProgress }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(`Progress updated to ${newProgress}%`);
+        fetchTasks();
+      } else {
+        toast.error(data.error || "Failed to update progress");
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      toast.error("Error updating progress");
+      throw error;
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -537,14 +563,17 @@ export default function TasksPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-muted-foreground">
+                      <div className="min-w-[200px]">
+                        <div className="flex items-center gap-1 text-muted-foreground text-xs mb-2">
                           <Calendar className="h-3 w-3" />
                           {formatDate(task.dueDate)}
                         </div>
-                        <div className="font-medium mt-1">
-                          {task.progressPercentage}% complete
-                        </div>
+                        <TaskProgressUpdater
+                          taskId={task._id}
+                          currentProgress={task.progressPercentage}
+                          onProgressUpdate={handleProgressUpdate}
+                          variant="inline"
+                        />
                       </div>
                       <Badge
                         variant="secondary"
@@ -630,6 +659,12 @@ export default function TasksPage() {
                             <Calendar className="h-3 w-3" />
                             {formatDate(task.dueDate)}
                           </div>
+                          <TaskProgressUpdater
+                            taskId={task._id}
+                            currentProgress={task.progressPercentage}
+                            onProgressUpdate={handleProgressUpdate}
+                            variant="inline"
+                          />
                           <div className="flex gap-1 pt-2">
                             <Button
                               size="sm"
