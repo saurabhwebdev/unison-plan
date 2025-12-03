@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Task from "@/models/Task";
 import { requireAuth } from "@/lib/middleware";
+import { sendNotificationEmail } from "@/lib/emailService";
+import {
+  taskStatusChangedTemplate,
+  taskCompletedTemplate,
+  taskBlockedTemplate,
+  taskPriorityChangedTemplate,
+  taskProgressUpdatedTemplate,
+  taskDueDateChangedTemplate
+} from "@/lib/emailTemplates/taskEmails";
 
 export async function GET(
   request: NextRequest,
@@ -65,6 +74,15 @@ export async function PUT(
       dependencies,
     } = body;
 
+    // Get old task for comparison
+    const oldTask = await Task.findById(id)
+      .populate("project", "name projectCode")
+      .populate("assignedTo", "username email");
+
+    if (!oldTask) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
     // Build update object with only provided fields
     const updateData: any = {};
     if (title !== undefined) updateData.title = title;
@@ -92,6 +110,126 @@ export async function PUT(
     if (!updatedTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
+
+    // Send email notifications asynchronously
+    setImmediate(async () => {
+      try {
+        const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tasks`;
+
+        // Notify on status change
+        if (status !== undefined && status !== oldTask.status && oldTask.assignedTo) {
+          const emailTemplate = taskStatusChangedTemplate({
+            taskTitle: updatedTask.title,
+            projectName: updatedTask.project.name,
+            projectCode: updatedTask.project.projectCode,
+            oldStatus: oldTask.status,
+            newStatus: status,
+            userName: oldTask.assignedTo.username,
+            taskUrl
+          });
+
+          await sendNotificationEmail({
+            userId: oldTask.assignedTo._id.toString(),
+            notificationType: 'taskStatusChanged',
+            emailTemplate
+          });
+
+          // Check if completed
+          if (status === 'completed') {
+            const completedTemplate = taskCompletedTemplate({
+              taskTitle: updatedTask.title,
+              projectName: updatedTask.project.name,
+              projectCode: updatedTask.project.projectCode,
+              userName: oldTask.assignedTo.username,
+              taskUrl
+            });
+
+            await sendNotificationEmail({
+              userId: oldTask.assignedTo._id.toString(),
+              notificationType: 'taskCompleted',
+              emailTemplate: completedTemplate
+            });
+          }
+
+          // Check if blocked
+          if (status === 'blocked') {
+            const blockedTemplate = taskBlockedTemplate({
+              taskTitle: updatedTask.title,
+              projectName: updatedTask.project.name,
+              projectCode: updatedTask.project.projectCode,
+              blockReason: body.blockReason,
+              userName: oldTask.assignedTo.username,
+              taskUrl
+            });
+
+            await sendNotificationEmail({
+              userId: oldTask.assignedTo._id.toString(),
+              notificationType: 'taskStatusChanged',
+              emailTemplate: blockedTemplate
+            });
+          }
+        }
+
+        // Notify on priority change
+        if (priority !== undefined && priority !== oldTask.priority && oldTask.assignedTo) {
+          const emailTemplate = taskPriorityChangedTemplate({
+            taskTitle: updatedTask.title,
+            projectName: updatedTask.project.name,
+            projectCode: updatedTask.project.projectCode,
+            priority,
+            userName: oldTask.assignedTo.username,
+            taskUrl
+          });
+
+          await sendNotificationEmail({
+            userId: oldTask.assignedTo._id.toString(),
+            notificationType: 'taskStatusChanged',
+            emailTemplate
+          });
+        }
+
+        // Notify on progress update (only if significant change, e.g., 25% or more)
+        if (progressPercentage !== undefined && oldTask.assignedTo) {
+          const progressDiff = Math.abs(progressPercentage - (oldTask.progressPercentage || 0));
+          if (progressDiff >= 25) {
+            const emailTemplate = taskProgressUpdatedTemplate({
+              taskTitle: updatedTask.title,
+              projectName: updatedTask.project.name,
+              projectCode: updatedTask.project.projectCode,
+              progressPercentage,
+              userName: oldTask.assignedTo.username,
+              taskUrl
+            });
+
+            await sendNotificationEmail({
+              userId: oldTask.assignedTo._id.toString(),
+              notificationType: 'taskStatusChanged',
+              emailTemplate
+            });
+          }
+        }
+
+        // Notify on due date change
+        if (dueDate !== undefined && dueDate !== oldTask.dueDate && oldTask.assignedTo) {
+          const emailTemplate = taskDueDateChangedTemplate({
+            taskTitle: updatedTask.title,
+            projectName: updatedTask.project.name,
+            projectCode: updatedTask.project.projectCode,
+            dueDate: new Date(dueDate).toLocaleDateString(),
+            userName: oldTask.assignedTo.username,
+            taskUrl
+          });
+
+          await sendNotificationEmail({
+            userId: oldTask.assignedTo._id.toString(),
+            notificationType: 'taskDueSoon',
+            emailTemplate
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending task update emails:', emailError);
+      }
+    });
 
     return NextResponse.json(
       { success: true, data: updatedTask },

@@ -3,6 +3,16 @@ import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
 import { verifyAuth } from "@/lib/middleware";
 import mongoose from "mongoose";
+import { sendNotificationEmail, sendNotificationEmailToMultiple } from "@/lib/emailService";
+import {
+  projectStatusChangedTemplate,
+  projectDeadlineApproachingTemplate,
+  projectCompletedTemplate,
+  teamMemberAddedToProjectTemplate,
+  teamMemberRemovedFromProjectTemplate,
+  projectPriorityChangedTemplate,
+  budgetThresholdReachedTemplate
+} from "@/lib/emailTemplates/projectEmails";
 
 // GET /api/projects/[id] - Get single project
 export async function GET(
@@ -144,6 +154,12 @@ export async function PUT(
 
     const body = await request.json();
 
+    // Track changes for email notifications
+    const oldStage = project.stage;
+    const oldPriority = project.priority;
+    const oldBudgetSpent = project.budgetSpent;
+    const oldTeamMembers = project.teamMembers.map((tm: any) => tm.user?.toString());
+
     // Update project fields
     Object.keys(body).forEach((key) => {
       if (key !== "_id" && key !== "createdBy" && key !== "createdAt") {
@@ -160,6 +176,153 @@ export async function PUT(
       { path: "businessDevelopmentLead", select: "username email" },
       { path: "teamMembers.user", select: "username email" },
     ]);
+
+    // Send email notifications asynchronously
+    setImmediate(async () => {
+      try {
+        const projectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/projects/${project._id}`;
+        const allTeamMemberIds = project.teamMembers?.map((tm: any) => tm.user?._id?.toString()).filter(Boolean) || [];
+
+        // Notify on stage/status change
+        if (body.stage && body.stage !== oldStage) {
+          const emailTemplate = projectStatusChangedTemplate({
+            projectName: project.name,
+            projectCode: project.projectCode,
+            oldStatus: oldStage,
+            newStatus: body.stage,
+            userName: '',
+            projectUrl
+          });
+
+          // Notify all team members
+          if (allTeamMemberIds.length > 0) {
+            await sendNotificationEmailToMultiple({
+              userIds: allTeamMemberIds,
+              notificationType: 'projectStatusChanged',
+              emailTemplate
+            });
+          }
+
+          // Check if project completed
+          if (body.stage === 'completed' || body.stage === 'delivered') {
+            const completedTemplate = projectCompletedTemplate({
+              projectName: project.name,
+              projectCode: project.projectCode,
+              userName: '',
+              projectUrl
+            });
+
+            if (allTeamMemberIds.length > 0) {
+              await sendNotificationEmailToMultiple({
+                userIds: allTeamMemberIds,
+                notificationType: 'projectCompleted',
+                emailTemplate: completedTemplate
+              });
+            }
+          }
+        }
+
+        // Notify on priority change
+        if (body.priority && body.priority !== oldPriority) {
+          const emailTemplate = projectPriorityChangedTemplate({
+            projectName: project.name,
+            projectCode: project.projectCode,
+            priority: body.priority,
+            userName: '',
+            projectUrl
+          });
+
+          if (allTeamMemberIds.length > 0) {
+            await sendNotificationEmailToMultiple({
+              userIds: allTeamMemberIds,
+              notificationType: 'projectStatusChanged',
+              emailTemplate
+            });
+          }
+        }
+
+        // Notify on budget threshold
+        if (body.budgetSpent !== undefined && project.budget) {
+          const percentageUsed = (body.budgetSpent / project.budget) * 100;
+          const oldPercentage = oldBudgetSpent ? (oldBudgetSpent / project.budget) * 100 : 0;
+
+          // Trigger alert if crossing 80% threshold
+          if (percentageUsed >= 80 && oldPercentage < 80) {
+            const emailTemplate = budgetThresholdReachedTemplate({
+              projectName: project.name,
+              projectCode: project.projectCode,
+              budget: project.budget,
+              budgetSpent: body.budgetSpent,
+              userName: '',
+              projectUrl
+            });
+
+            if (allTeamMemberIds.length > 0) {
+              await sendNotificationEmailToMultiple({
+                userIds: allTeamMemberIds,
+                notificationType: 'budgetAlert',
+                emailTemplate
+              });
+            }
+
+            // Also notify project manager
+            if (project.projectManager?._id) {
+              await sendNotificationEmail({
+                userId: project.projectManager._id.toString(),
+                notificationType: 'budgetAlert',
+                emailTemplate
+              });
+            }
+          }
+        }
+
+        // Notify on team member changes
+        if (body.teamMembers) {
+          const newTeamMembers = body.teamMembers.map((tm: any) => tm.user?.toString());
+          const addedMembers = newTeamMembers.filter((id: string) => !oldTeamMembers.includes(id));
+          const removedMembers = oldTeamMembers.filter((id: string) => !newTeamMembers.includes(id));
+
+          // Notify added team members
+          for (const memberId of addedMembers) {
+            const member = project.teamMembers.find((tm: any) => tm.user?._id?.toString() === memberId);
+            if (member) {
+              const emailTemplate = teamMemberAddedToProjectTemplate({
+                projectName: project.name,
+                projectCode: project.projectCode,
+                teamMemberName: member.user.username,
+                userName: member.user.username,
+                projectUrl
+              });
+
+              await sendNotificationEmail({
+                userId: memberId,
+                notificationType: 'teamMemberAdded',
+                emailTemplate
+              });
+            }
+          }
+
+          // Notify removed team members
+          for (const memberId of removedMembers) {
+            const emailTemplate = teamMemberRemovedFromProjectTemplate({
+              projectName: project.name,
+              projectCode: project.projectCode,
+              teamMemberName: '',
+              userName: '',
+              projectUrl
+            });
+
+            await sendNotificationEmail({
+              userId: memberId,
+              notificationType: 'teamMemberAdded',
+              emailTemplate
+            });
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending project update emails:', emailError);
+      }
+    });
 
     return NextResponse.json(
       {

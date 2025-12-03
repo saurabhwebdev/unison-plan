@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Client from "@/models/Client";
 import { verifyAuth } from "@/lib/middleware";
+import { sendNotificationEmail } from "@/lib/emailService";
+import { clientCreatedTemplate, clientAssignedTemplate } from "@/lib/emailTemplates/clientEmails";
 
 // GET /api/clients - List all clients with filters
 export async function GET(request: NextRequest) {
@@ -133,6 +135,31 @@ export async function POST(request: NextRequest) {
       { path: "createdBy", select: "username email" },
       { path: "accountManager", select: "username email" },
     ]);
+
+    // Send email notifications asynchronously
+    if (body.accountManager && body.accountManager !== authResult.user._id) {
+      setImmediate(async () => {
+        try {
+          const clientUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/clients`;
+
+          const emailTemplate = clientAssignedTemplate({
+            clientName: client.name,
+            clientCompany: client.companyName,
+            assignedBy: authResult.user.username,
+            userName: client.accountManager?.username || '',
+            clientUrl
+          });
+
+          await sendNotificationEmail({
+            userId: body.accountManager,
+            notificationType: 'clientAssigned',
+            emailTemplate
+          });
+        } catch (emailError) {
+          console.error('Error sending client assignment email:', emailError);
+        }
+      });
+    }
 
     return NextResponse.json(
       {

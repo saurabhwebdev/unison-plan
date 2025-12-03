@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
 import { verifyAuth } from "@/lib/middleware";
+import { sendNotificationEmail, sendNotificationEmailToMultiple } from "@/lib/emailService";
+import {
+  projectCreatedTemplate,
+  projectAssignedTemplate,
+  teamMemberAddedToProjectTemplate
+} from "@/lib/emailTemplates/projectEmails";
 
 // GET /api/projects - List all projects with filters
 export async function GET(request: NextRequest) {
@@ -160,6 +166,56 @@ export async function POST(request: NextRequest) {
       { path: "businessDevelopmentLead", select: "username email" },
       { path: "teamMembers.user", select: "username email" },
     ]);
+
+    // Send email notifications asynchronously (don't block the response)
+    setImmediate(async () => {
+      try {
+        const projectUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/projects/${project._id}`;
+
+        // Notify all team members about new project
+        const teamMemberIds = body.teamMembers?.map((tm: any) => tm.user).filter(Boolean) || [];
+        if (teamMemberIds.length > 0) {
+          const emailTemplate = projectCreatedTemplate({
+            projectName: project.name,
+            projectCode: project.projectCode,
+            projectDescription: project.description,
+            projectManager: project.projectManager?.username,
+            userName: '', // Will be replaced per user
+            projectUrl
+          });
+
+          await sendNotificationEmailToMultiple({
+            userIds: teamMemberIds,
+            notificationType: 'projectCreated',
+            emailTemplate: {
+              ...emailTemplate,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+              text: emailTemplate.text
+            }
+          });
+        }
+
+        // Notify project manager if assigned
+        if (body.projectManager && body.projectManager !== authResult.user._id) {
+          const pmEmailTemplate = projectAssignedTemplate({
+            projectName: project.name,
+            projectCode: project.projectCode,
+            projectManager: authResult.user.username,
+            userName: project.projectManager?.username || '',
+            projectUrl
+          });
+
+          await sendNotificationEmail({
+            userId: body.projectManager,
+            notificationType: 'projectAssigned',
+            emailTemplate: pmEmailTemplate
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending project creation emails:', emailError);
+      }
+    });
 
     return NextResponse.json(
       {

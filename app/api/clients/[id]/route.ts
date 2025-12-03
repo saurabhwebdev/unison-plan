@@ -3,6 +3,8 @@ import connectDB from "@/lib/mongodb";
 import Client from "@/models/Client";
 import { verifyAuth } from "@/lib/middleware";
 import mongoose from "mongoose";
+import { sendNotificationEmail } from "@/lib/emailService";
+import { clientStatusChangedTemplate, clientPriorityChangedTemplate } from "@/lib/emailTemplates/clientEmails";
 
 // GET /api/clients/[id] - Get single client
 export async function GET(
@@ -89,6 +91,10 @@ export async function PUT(
 
     const body = await request.json();
 
+    // Track changes for email notifications
+    const oldStatus = client.status;
+    const oldPriority = client.priority;
+
     // Update client fields
     Object.keys(body).forEach((key) => {
       if (key !== "_id" && key !== "createdBy" && key !== "createdAt") {
@@ -103,6 +109,52 @@ export async function PUT(
       { path: "createdBy", select: "username email" },
       { path: "accountManager", select: "username email" },
     ]);
+
+    // Send email notifications asynchronously
+    if (client.accountManager) {
+      setImmediate(async () => {
+        try {
+          const clientUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/clients`;
+
+          // Notify on status change
+          if (body.status && body.status !== oldStatus) {
+            const emailTemplate = clientStatusChangedTemplate({
+              clientName: client.name,
+              clientCompany: client.companyName,
+              oldStatus,
+              newStatus: body.status,
+              userName: client.accountManager.username,
+              clientUrl
+            });
+
+            await sendNotificationEmail({
+              userId: client.accountManager._id.toString(),
+              notificationType: 'clientStatusChanged',
+              emailTemplate
+            });
+          }
+
+          // Notify on priority change
+          if (body.priority && body.priority !== oldPriority) {
+            const emailTemplate = clientPriorityChangedTemplate({
+              clientName: client.name,
+              clientCompany: client.companyName,
+              priority: body.priority,
+              userName: client.accountManager.username,
+              clientUrl
+            });
+
+            await sendNotificationEmail({
+              userId: client.accountManager._id.toString(),
+              notificationType: 'clientStatusChanged',
+              emailTemplate
+            });
+          }
+        } catch (emailError) {
+          console.error('Error sending client update emails:', emailError);
+        }
+      });
+    }
 
     return NextResponse.json(
       {

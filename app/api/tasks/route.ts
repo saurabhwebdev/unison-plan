@@ -3,6 +3,8 @@ import connectDB from "@/lib/mongodb";
 import Task from "@/models/Task";
 import Project from "@/models/Project";
 import { requireAuth } from "@/lib/middleware";
+import { sendNotificationEmail } from "@/lib/emailService";
+import { taskAssignedTemplate } from "@/lib/emailTemplates/taskEmails";
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,6 +127,34 @@ export async function POST(request: NextRequest) {
       .populate("project", "name projectCode")
       .populate("assignedTo", "username email")
       .populate("createdBy", "username email");
+
+    // Send email notification asynchronously
+    if (assignedTo && assignedTo !== user.userId) {
+      setImmediate(async () => {
+        try {
+          const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/tasks`;
+
+          const emailTemplate = taskAssignedTemplate({
+            taskTitle: title,
+            projectName: projectExists.name,
+            projectCode: projectExists.projectCode,
+            assignedBy: user.username || 'System',
+            dueDate: dueDate ? new Date(dueDate).toLocaleDateString() : undefined,
+            priority,
+            userName: populatedTask.assignedTo?.username || '',
+            taskUrl
+          });
+
+          await sendNotificationEmail({
+            userId: assignedTo,
+            notificationType: 'taskAssigned',
+            emailTemplate
+          });
+        } catch (emailError) {
+          console.error('Error sending task assignment email:', emailError);
+        }
+      });
+    }
 
     return NextResponse.json(
       { success: true, data: populatedTask },

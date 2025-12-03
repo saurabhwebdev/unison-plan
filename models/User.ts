@@ -12,6 +12,27 @@ export interface IUser extends Document {
   otpExpires?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  emailPreferences: {
+    enabled: boolean;
+    frequency: "instant" | "daily_digest" | "weekly_digest";
+    projectCreated: boolean;
+    projectAssigned: boolean;
+    projectStatusChanged: boolean;
+    projectDeadlineApproaching: boolean;
+    projectCompleted: boolean;
+    taskAssigned: boolean;
+    taskDueSoon: boolean;
+    taskOverdue: boolean;
+    taskCompleted: boolean;
+    taskStatusChanged: boolean;
+    taskMentioned: boolean;
+    clientAssigned: boolean;
+    clientStatusChanged: boolean;
+    budgetAlert: boolean;
+    teamMemberAdded: boolean;
+    weeklyDigest: boolean;
+    monthlyReport: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,6 +90,54 @@ const UserSchema = new Schema<IUser>(
     },
     resetPasswordExpires: {
       type: Date,
+    },
+    emailPreferences: {
+      type: {
+        enabled: { type: Boolean, default: true },
+        frequency: {
+          type: String,
+          enum: ["instant", "daily_digest", "weekly_digest"],
+          default: "instant"
+        },
+        projectCreated: { type: Boolean, default: true },
+        projectAssigned: { type: Boolean, default: true },
+        projectStatusChanged: { type: Boolean, default: true },
+        projectDeadlineApproaching: { type: Boolean, default: true },
+        projectCompleted: { type: Boolean, default: true },
+        taskAssigned: { type: Boolean, default: true },
+        taskDueSoon: { type: Boolean, default: true },
+        taskOverdue: { type: Boolean, default: true },
+        taskCompleted: { type: Boolean, default: false },
+        taskStatusChanged: { type: Boolean, default: false },
+        taskMentioned: { type: Boolean, default: true },
+        clientAssigned: { type: Boolean, default: true },
+        clientStatusChanged: { type: Boolean, default: false },
+        budgetAlert: { type: Boolean, default: true },
+        teamMemberAdded: { type: Boolean, default: true },
+        weeklyDigest: { type: Boolean, default: false },
+        monthlyReport: { type: Boolean, default: false },
+      },
+      default: () => ({
+        enabled: true,
+        frequency: "instant",
+        projectCreated: true,
+        projectAssigned: true,
+        projectStatusChanged: true,
+        projectDeadlineApproaching: true,
+        projectCompleted: true,
+        taskAssigned: true,
+        taskDueSoon: true,
+        taskOverdue: true,
+        taskCompleted: false,
+        taskStatusChanged: false,
+        taskMentioned: true,
+        clientAssigned: true,
+        clientStatusChanged: false,
+        budgetAlert: true,
+        teamMemberAdded: true,
+        weeklyDigest: false,
+        monthlyReport: false,
+      }),
     },
   },
   {
