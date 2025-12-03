@@ -68,12 +68,15 @@ export default function EmailSettingsPage() {
       const response = await fetch("/api/user/email-preferences");
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.data) {
         setPreferences(data.data);
+        console.log("Loaded preferences:", data.data);
       } else {
         toast.error("Failed to load email preferences");
+        console.error("Failed to load preferences:", data);
       }
     } catch (error) {
+      console.error("Error loading email preferences:", error);
       toast.error("Error loading email preferences");
     } finally {
       setLoading(false);
@@ -83,6 +86,8 @@ export default function EmailSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      console.log("Saving preferences:", preferences);
+
       const response = await fetch("/api/user/email-preferences", {
         method: "PUT",
         headers: {
@@ -94,11 +99,18 @@ export default function EmailSettingsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Email preferences saved successfully");
+        toast.success("Email preferences saved successfully! 💾");
+        // Update local state with saved data to ensure sync
+        if (data.data) {
+          setPreferences(data.data);
+          console.log("Preferences saved and updated:", data.data);
+        }
       } else {
         toast.error(data.error || "Failed to save email preferences");
+        console.error("Save failed:", data);
       }
     } catch (error) {
+      console.error("Error saving email preferences:", error);
       toast.error("Error saving email preferences");
     } finally {
       setSaving(false);

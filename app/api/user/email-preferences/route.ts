@@ -19,10 +19,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // If user doesn't have email preferences, return defaults
+    const defaultPreferences = {
+      enabled: true,
+      frequency: "instant",
+      projectCreated: true,
+      projectAssigned: true,
+      projectStatusChanged: true,
+      projectDeadlineApproaching: true,
+      projectCompleted: true,
+      taskAssigned: true,
+      taskDueSoon: true,
+      taskOverdue: true,
+      taskCompleted: false,
+      taskStatusChanged: false,
+      taskMentioned: true,
+      clientAssigned: true,
+      clientStatusChanged: false,
+      budgetAlert: true,
+      teamMemberAdded: true,
+      weeklyDigest: false,
+      monthlyReport: false,
+    };
+
+    const preferences = user.emailPreferences || defaultPreferences;
+
     return NextResponse.json(
       {
         success: true,
-        data: user.emailPreferences,
+        data: preferences,
       },
       { status: 200 }
     );
@@ -46,6 +71,43 @@ export async function PUT(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
+
+    // First, get the current user to check if emailPreferences exists
+    const currentUser = await User.findById(authResult.user._id).select("emailPreferences");
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // If emailPreferences doesn't exist, initialize it with defaults first
+    if (!currentUser.emailPreferences) {
+      const defaultPreferences = {
+        enabled: true,
+        frequency: "instant",
+        projectCreated: true,
+        projectAssigned: true,
+        projectStatusChanged: true,
+        projectDeadlineApproaching: true,
+        projectCompleted: true,
+        taskAssigned: true,
+        taskDueSoon: true,
+        taskOverdue: true,
+        taskCompleted: false,
+        taskStatusChanged: false,
+        taskMentioned: true,
+        clientAssigned: true,
+        clientStatusChanged: false,
+        budgetAlert: true,
+        teamMemberAdded: true,
+        weeklyDigest: false,
+        monthlyReport: false,
+      };
+
+      await User.findByIdAndUpdate(
+        authResult.user._id,
+        { $set: { emailPreferences: defaultPreferences } }
+      );
+    }
 
     // Validate that we're only updating emailPreferences fields
     const validFields = [
