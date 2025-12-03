@@ -72,8 +72,12 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
+    console.log("PUT /api/user/email-preferences - User ID:", authResult.user._id);
+    console.log("PUT /api/user/email-preferences - Request body:", body);
+
     // First, get the current user to check if emailPreferences exists
     const currentUser = await User.findById(authResult.user._id).select("emailPreferences");
+    console.log("Current user emailPreferences:", currentUser?.emailPreferences);
 
     if (!currentUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -146,24 +150,30 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    console.log("Updates to apply:", updates);
+
     const user = await User.findByIdAndUpdate(
       authResult.user._id,
       { $set: updates },
       { new: true, runValidators: true }
     ).select("emailPreferences");
 
+    console.log("Updated user emailPreferences:", user?.emailPreferences);
+
     if (!user) {
+      console.error("User not found after update");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Email preferences updated successfully",
-        data: user.emailPreferences,
-      },
-      { status: 200 }
-    );
+    const response = {
+      success: true,
+      message: "Email preferences updated successfully",
+      data: user.emailPreferences,
+    };
+
+    console.log("Sending response:", response);
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
     console.error("Error updating email preferences:", error);
 

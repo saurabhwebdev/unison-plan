@@ -43,7 +43,9 @@
       "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\projects\\new\\page.tsx'' | Measure-Object -Line).Lines\")",
       "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\projects\\[id]\\edit\\page.tsx'' | Measure-Object -Line).Lines\")",
       "Bash(gh repo create:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(node scripts/migrate-email-preferences.js:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

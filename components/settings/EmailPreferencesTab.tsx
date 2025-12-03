@@ -96,7 +96,10 @@ export function EmailPreferencesTab() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      console.log("Save response status:", response.status);
+      console.log("Save response data:", data);
+
+      if (response.ok && data.success) {
         toast.success("Email preferences saved successfully! 💾");
         // Update local state with saved data to ensure sync
         if (data.data) {
@@ -104,8 +107,9 @@ export function EmailPreferencesTab() {
           console.log("Preferences saved and updated:", data.data);
         }
       } else {
-        toast.error(data.error || "Failed to save email preferences");
-        console.error("Save failed:", data);
+        const errorMsg = data.error || data.message || "Failed to save email preferences";
+        toast.error(errorMsg);
+        console.error("Save failed - Status:", response.status, "Data:", data);
       }
     } catch (error) {
       console.error("Error saving email preferences:", error);
