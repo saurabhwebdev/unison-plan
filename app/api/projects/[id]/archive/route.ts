@@ -38,7 +38,7 @@ export async function POST(
 
     // Check permissions - Only admin, manager, or PM can archive
     const userRole = authResult.user.role;
-    const userId = authResult.user._id.toString();
+    const userId = (authResult.user._id || authResult.user.userId).toString();
 
     if (userRole !== "admin" && userRole !== "manager") {
       const isPM =

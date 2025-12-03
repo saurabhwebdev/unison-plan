@@ -75,12 +75,13 @@ export async function GET(request: NextRequest) {
 
     // Role-based filtering
     const userRole = authResult.user.role;
+    const userId = authResult.user._id || authResult.user.userId;
     if (userRole === "user") {
       // Regular users can only see projects they're part of
       filter.$or = [
-        { createdBy: authResult.user._id },
-        { projectManager: authResult.user._id },
-        { "teamMembers.user": authResult.user._id },
+        { createdBy: userId },
+        { projectManager: userId },
+        { "teamMembers.user": userId },
       ];
     }
 
@@ -151,9 +152,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create project
+    const userId = authResult.user._id || authResult.user.userId;
     const project = new Project({
       ...body,
-      createdBy: authResult.user._id,
+      createdBy: userId,
       status: "active",
     });
 
@@ -197,7 +199,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Notify project manager if assigned
-        if (body.projectManager && body.projectManager !== authResult.user._id) {
+        if (body.projectManager && body.projectManager !== userId) {
           const pmEmailTemplate = projectAssignedTemplate({
             projectName: project.name,
             projectCode: project.projectCode,

@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(authResult.user._id).select("emailPreferences");
+    const userId = authResult.user._id || authResult.user.userId;
+    const user = await User.findById(userId).select("emailPreferences");
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -72,11 +73,12 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    console.log("PUT /api/user/email-preferences - User ID:", authResult.user._id);
+    const userId = authResult.user._id || authResult.user.userId;
+    console.log("PUT /api/user/email-preferences - User ID:", userId);
     console.log("PUT /api/user/email-preferences - Request body:", body);
 
     // First, get the current user to check if emailPreferences exists
-    const currentUser = await User.findById(authResult.user._id).select("emailPreferences");
+    const currentUser = await User.findById(userId).select("emailPreferences");
     console.log("Current user emailPreferences:", currentUser?.emailPreferences);
 
     if (!currentUser) {
@@ -108,7 +110,7 @@ export async function PUT(request: NextRequest) {
       };
 
       await User.findByIdAndUpdate(
-        authResult.user._id,
+        userId,
         { $set: { emailPreferences: defaultPreferences } }
       );
     }
@@ -153,7 +155,7 @@ export async function PUT(request: NextRequest) {
     console.log("Updates to apply:", updates);
 
     const user = await User.findByIdAndUpdate(
-      authResult.user._id,
+      userId,
       { $set: updates },
       { new: true, runValidators: true }
     ).select("emailPreferences");

@@ -122,9 +122,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Create client
+    const userId = authResult.user._id || authResult.user.userId;
     const client = new Client({
       ...body,
-      createdBy: authResult.user._id,
+      createdBy: userId,
       status: body.status || "active",
     });
 
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Send email notifications asynchronously
-    if (body.accountManager && body.accountManager !== authResult.user._id) {
+    if (body.accountManager && body.accountManager !== userId) {
       setImmediate(async () => {
         try {
           const clientUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/clients`;
