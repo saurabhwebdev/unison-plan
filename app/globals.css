@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background colors */
+    --background: 0 0% 100%;
+    --card: 0 0% 100%;
+    --popover: 0 0% 100%;
+
+    /* Primary brand color - #77c044 (green) */
+    --primary: 97 48% 51%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Text/Foreground colors - #0d6eb8 (blue) and shades */
+    --foreground: 206 87% 39%;
+    --card-foreground: 206 87% 39%;
+    --popover-foreground: 206 87% 39%;
+
+    /* Secondary colors - lighter blue */
+    --secondary: 206 87% 95%;
+    --secondary-foreground: 206 87% 39%;
+
+    /* Muted colors - subtle blue */
+    --muted: 206 30% 96%;
+    --muted-foreground: 206 50% 50%;
+
+    /* Accent colors - using primary green */
+    --accent: 97 48% 95%;
+    --accent-foreground: 97 48% 45%;
+
+    /* Destructive/Error colors */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border and input colors */
+    --border: 206 30% 90%;
+    --input: 206 30% 90%;
+    --ring: 97 48% 51%;
+
+    --radius: 0.5rem;
+
+    /* Chart colors - green theme */
+    --chart-1: 97 48% 51%;
+    --chart-2: 206 87% 39%;
+    --chart-3: 150 60% 45%;
+    --chart-4: 120 45% 50%;
+    --chart-5: 180 55% 45%;
+  }
+
+  .dark {
+    /* Dark mode background */
+    --background: 206 70% 8%;
+    --card: 206 65% 10%;
+    --popover: 206 65% 10%;
+
+    /* Primary stays green */
+    --primary: 97 48% 51%;
+    --primary-foreground: 206 70% 8%;
+
+    /* Dark mode text - lighter blue */
+    --foreground: 206 60% 85%;
+    --card-foreground: 206 60% 85%;
+    --popover-foreground: 206 60% 85%;
+
+    /* Dark mode secondary */
+    --secondary: 206 50% 20%;
+    --secondary-foreground: 206 60% 85%;
+
+    /* Dark mode muted */
+    --muted: 206 50% 15%;
+    --muted-foreground: 206 40% 60%;
+
+    /* Dark mode accent */
+    --accent: 97 48% 20%;
+    --accent-foreground: 97 48% 85%;
+
+    /* Dark mode destructive */
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 206 60% 85%;
+
+    /* Dark mode borders */
+    --border: 206 50% 20%;
+    --input: 206 50% 20%;
+    --ring: 97 48% 51%;
+
+    /* Dark mode charts */
+    --chart-1: 97 48% 55%;
+    --chart-2: 206 70% 50%;
+    --chart-3: 150 60% 50%;
+    --chart-4: 120 50% 55%;
+    --chart-5: 180 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Minimal smooth transitions */
+  .transition-smooth {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Subtle hover effects */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+
+  .hover-border {
+    transition: border-color 0.2s ease;
+  }
+
+  .hover-border:hover {
+    border-color: hsl(var(--primary));
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch-friendly interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better mobile font sizing */
+@media (max-width: 640px) {
+  html {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Improved mobile input styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea,
+select {
+  font-size: 16px; /* Prevents iOS zoom on focus */
+}
+
+/* Mobile-friendly button sizes */
+@media (max-width: 640px) {
+  button:not(.no-touch) {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+    min-width: 44px;
+  }
+}

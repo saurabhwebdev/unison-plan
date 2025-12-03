@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run seed-admin:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(if [ -f .gitignore ])",
+      "Bash(then cat .gitignore)",
+      "Bash(else echo \"File does not exist\")",
+      "Bash(fi)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "mcp__mongodb__list_collections",
+      "mcp__mongodb__find_documents",
+      "mcp__mongodb__insert_document",
+      "mcp__mongodb__delete_document",
+      "Bash(\"C:\\Webdev\\upp\\app\\projects\\[id]\\page.tsx\")",
+      "mcp__mongodb__update_document",
+      "mcp__mongodb__aggregate",
+      "mcp__mongodb__count_documents",
+      "Bash(node -e:*)",
+      "Bash(node scripts/create-sample-tasks.js:*)",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\projects\\page.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\clients\\page.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\tasks\\page.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\team\\page.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(if [ -d .next ])",
+      "Bash(then rm -rf .next)",
+      "Bash(else echo \".next directory not found\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\projects\\new\\page.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Webdev\\upp\\app\\projects\\[id]\\edit\\page.tsx'' | Measure-Object -Line).Lines\")"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "mongodb"
+  ]
+}

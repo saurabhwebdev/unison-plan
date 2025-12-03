@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mongodb": {
+      "command": "node",
+      "args": ["C:\\Webdev\\upp\\mcp-mongodb-server\\index.js"],
+      "env": {
+        "MONGODB_URI": "mongodb://localhost:27017/project-tracker"
+      }
+    }
+  }
+}
